@@ -7,10 +7,13 @@ public class NaiveDFS {
 	public int cNum;
 	public final int BLACK = 1;
 	public final int WHITE = 0;
+	public ArrayList<List> tempAns;
+	public ArrayList<List> answer;
 	
 	public NaiveDFS(ArrayList<List> inputs){
 		this.inputs = inputs;
 		cNum = inputs.size()/2;
+		answer = new ArrayList<>();
 	}
 	
 	public void run(){
@@ -26,8 +29,41 @@ public class NaiveDFS {
 			
 		}
 	}
+
+	public ArrayList<Integer> findTempAns(int from, int to, int len, ArrayList<Integer> rowHeads, int rowNum){
+		if(to < from) return null;
+		if(len ==0) return null;
+		if(to == from){
+			if(len != 1){
+				return null;
+			}else{  //complete one row, do partial rowTest
+				rowHeads.add(from);
+				return rowHeads;
+			}
+		}
+
+		//find rowNum th row
+		for(int i = from+1; i<= to-len+2; i++){
+			ArrayList<Integer> ans = new ArrayList<>();
+			ans.addAll(rowHeads);
+			ans.add(i-1);
+			findTempAns(i, to, len-1, ans, rowNum);
+
+		}
+
+
+
+		return null;
+	}
+
+	public boolean checkRowValid(ArrayList<Integer> rowHeads, ArrayList<Integer> spec){
+
+
+
+		return true;
+	}
 	
-	public boolean check(ArrayList<List> ans, boolean partial){
+	public boolean checkCol(ArrayList<List> ans, boolean partial){
 		int nowInput = 0;
 		int contiBlack = 0;
 		//check all col, i = col
