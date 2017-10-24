@@ -62,4 +62,13 @@ public class Main {
 
     }
 
+    public static void print(ArrayList<List> ans){
+        for(int i=0; i<ans.size(); i++){
+            for(int j=0; j<ans.get(i).size(); j++){
+                System.out.print((int) ans.get(i).get(j) + " ");
+            }
+            System.out.println();
+        }
+    }
+
 }
