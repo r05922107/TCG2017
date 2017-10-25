@@ -6,12 +6,9 @@ public class NaiveDFS {
 	
 	public ArrayList<List> inputs;
 	public int cNum;
-	public final int BLACK = 1;
-	public final int WHITE = 0;
 	public int[] last;  //last row heads last position
 	public int[] len;  //row input's size
 	public ArrayList<List> answer;
-	public ArrayList<List> answerDraw;
 	public boolean findAns = false;
 	
 	public NaiveDFS(ArrayList<List> inputs){
@@ -27,52 +24,75 @@ public class NaiveDFS {
 	}
 
 	public void run(){
-		doSearch(0, initRawHeadsAns());
-
-		if(findAns){
-			answerDraw = new ArrayList<>();
-			for(int i=0; i<cNum; i++){
-				answerDraw.add(colorRow((ArrayList<Integer>) answer.get(i), (ArrayList<Integer>) inputs.get(i+cNum)));
-			}
-		}
+		doSearch(0, Tools.initRawHeadsAns(cNum, inputs));
 	}
 	
-	public void doSearch(int rowNum, ArrayList<List> ans){
-		if(rowNum >= cNum) return;
-		if(findAns) return;
+	public boolean doSearch(int rowNum, ArrayList<List> ans){
+		if(rowNum >= cNum) return true;
+		if(findAns) return false;
 		ArrayList<List> localAns = new ArrayList<>();
-		localAns.addAll(ans);
+		//clone ans
+		for(int i=0; i<cNum; i++){
+			ArrayList<Integer> temp = (ArrayList<Integer>) ans.get(i);
+			localAns.add((ArrayList<Integer>) temp.clone());
+		}
 		//get this row
 		ArrayList<Integer> thisRow = (ArrayList<Integer>) localAns.get(rowNum);
-		//move to next row
-		while(getNextRow(rowNum, thisRow, (ArrayList<Integer>) inputs.get(rowNum+cNum))){
+
+
+
+		//try to transform row
+		do{
+			//Find deeper layer
+//			System.out.println("Process rowNum: " + rowNum);
 			localAns.set(rowNum, thisRow);
-			doSearch(rowNum+1, localAns);
-			if(findAns) return;
-		}
-		//DFS: do this layer after lower layer has been processed
-		if(checkCol(ans)){
-			answer = ans;
-			findAns = true;
-		}
+			boolean checkFlag = doSearch(rowNum+1, localAns);
+			if(findAns) return false;
+
+			//DFS: do this layer after lower layer has been processed
+			if(checkFlag){
+				ArrayList<List> answerDraw = new ArrayList<>();
+				for(int i=0; i<cNum; i++){
+					answerDraw.add(Tools.colorRow((ArrayList<Integer>) localAns.get(i), (ArrayList<Integer>) inputs.get(i+cNum), cNum));
+				}
+//				Main.print(answerDraw);
+				if(checkCol(answerDraw)){
+					answer = answerDraw;
+					findAns = true;
+				}
+			}
+		}while(getNextRow(rowNum, thisRow, (ArrayList<Integer>) inputs.get(rowNum+cNum)));
+
+		return false;
 	}
 
 	public boolean getNextRow(int rowNum, ArrayList<Integer> rowHeads, ArrayList<Integer> inputRow){
+		//consider rowHeads = 0
+		if(rowHeads.get(0) == 0){
+			return false;
+		}
 		//can move all digit right 1 unit
 		if(rowHeads.get(len[rowNum]-1) < last[rowNum]){
 			for(int i=0; i<len[rowNum]; i++){
 				rowHeads.set(i, rowHeads.get(i)+1);
 			}
 		}else {
+			if(len[rowNum]-2 < 0) return false;
 			//move next digit
-			for(int moveDigit = len[rowNum]-2; moveDigit >= 0; moveDigit--){
+			for(int moveDigit = len[rowNum]-1; moveDigit >= 0; moveDigit--){
 				//Cannot move, all possible row has been iterated.
 				if(moveDigit == 0){
 					return false;
 				}
-				if( canMove(moveDigit, rowHeads, inputRow)){
-					//move right moveDigit 1, and arrange backward digit
-					arrangeRowHeads(moveDigit, rowHeads, inputRow);
+				if( Tools.canMove(moveDigit, rowHeads, inputRow)){
+					//move right moveDigit 1,
+					int range = rowHeads.get(0) - 1;
+					for(int i=0; i<len[rowNum]; i++){
+						rowHeads.set(i, rowHeads.get(i) - range);
+					}
+					rowHeads.set(moveDigit, rowHeads.get(moveDigit) + 1);
+					// and arrange backward digit
+					Tools.arrangeRowHeads(moveDigit, rowHeads, inputRow);
 					break;
 				}
 			}
@@ -80,83 +100,8 @@ public class NaiveDFS {
 		return true;
 	}
 
-	public ArrayList<List> initRawHeadsAns() {
-		ArrayList<List> ans = new ArrayList<>();
-		for(int row=0; row<cNum; row++){
-			ArrayList<Integer> inputRow = (ArrayList<Integer>) inputs.get(row+cNum);
-			ArrayList<Integer> rowHeads = new ArrayList<>();
-			rowHeads.add(1);
-			for(int i=1; i<inputRow.size(); i++){
-				rowHeads.add(rowHeads.get(i-1) + inputRow.get(i-1) + 1);
-			}
-			ans.add(rowHeads);
-		}
-		return ans;
-	}
-
-	public ArrayList<List> initWhiteAnswer(){
-		ArrayList<List> answer = new ArrayList<>();
-		for(int i=0; i<cNum; i++){
-			ArrayList<Integer> row = new ArrayList<>();
-			for(int j=0; j<cNum; j++){
-				row.add(WHITE);
-			}
-			answer.add(row);
-		}
-		return answer;
-	}
-
 	//
-	public void arrangeRowHeads(int moveDigit, ArrayList<Integer> rowHeads, ArrayList<Integer> inputRow){
-		if(canMove(moveDigit, rowHeads, inputRow)){
-			rowHeads.set(moveDigit, rowHeads.get(moveDigit)+1);
-			for(int i= moveDigit; i<rowHeads.size()-1; i++){
-				rowHeads.set(i+1, rowHeads.get(i) + inputRow.get(i) + 1);
-			}
-		}
-	}
 
-	//check if last digit(after move) < len
-	public boolean canMove(int moveDigit,  ArrayList<Integer> rowHeads, ArrayList<Integer> inputRow){
-		if(rowHeads.get(moveDigit) < rowHeads.get(moveDigit+1) - inputRow.get(moveDigit) -1){
-			return true;
-		}
-		return false;
-	}
-
-//	//check if last digit(after move) < len
-//	public boolean canMove(int moveDigit, int rowNum, ArrayList<Integer> rowHeads, ArrayList<Integer> inputRow){
-//		int spaceNum = len[rowNum] - moveDigit - 1;
-//		int sum = 0;
-//		for(int i=moveDigit; i<len[rowNum]-1; i++){
-//			sum += inputRow.get(i);
-//		}
-//		if(rowHeads.get(moveDigit)+1 + spaceNum + sum < last[rowNum]){
-//			return true;
-//		}
-//		return false;
-//	}
-
-	//rowHeads to answer type
-	public ArrayList<Integer> colorRow(ArrayList<Integer> rowHeads, ArrayList<Integer> inputRow){
-		ArrayList<Integer> rowAns = new ArrayList<>();
-		ArrayList<Integer> rowColor = new ArrayList<>();
-		//extend rowHeads
-		for(int i=0; i<rowHeads.size(); i++){
-			for(int j=0; j<inputRow.get(i); j++){
-				rowAns.add(rowHeads.get(i)+j);
-			}
-		}
-		//make white row
-		for(int i=0; i<cNum; i++){
-			rowColor.add(WHITE);
-		}
-		//draw
-		for(int i=0; i<rowAns.size(); i++){
-			rowColor.set(rowAns.get(i), BLACK);
-		}
-		return rowColor;
-	}
 	
 	public boolean checkCol(ArrayList<List> ans){
 		int nowInput = 0;
@@ -168,15 +113,19 @@ public class NaiveDFS {
 			//each col, check ans valid, j = input index
 			for(int j=0; j<inputs.get(i).size(); j++){
 				nowInput = (int) inputs.get(i).get(j);
+				if(nowInput == 0){
+					break;
+				}
 				//iterate all elements in the col ,k = row
 				for(; k<cNum; k++){
 					int color = (int) ans.get(k).get(i);
-					if(color == BLACK){
+					if(color == Tools.BLACK){
 						contiBlack++;
 						if(contiBlack > nowInput) return false;
-					}else{  //when meet white, the previous contiBlack should equal 
+					}else{  //when meet white, the previous contiBlack should equal
 						if(contiBlack == nowInput){ //find next input
 							k++;
+							contiBlack = 0;
 							break;
 						}
 						//contiBlack should not less than input.
@@ -188,13 +137,28 @@ public class NaiveDFS {
 						contiBlack = 0;
 					}
 				}
+				//check last contiBlack
+				if(contiBlack == nowInput){ //find next input
+					contiBlack = 0;
+				}
+				if(contiBlack != 0){
+					if(contiBlack < nowInput){
+						return false;
+					}
+				}
+				contiBlack = 0;
 			}
+			//after satisfy input, rest unit of the col should be white.
+			for(; k<cNum; k++){
+				int color = (int) ans.get(k).get(i);
+				if(color == Tools.BLACK){
+					return false;
+				}
+			}
+
 		}
-		
-		//check last contiBlack
-		if(contiBlack < nowInput){ //find next input
-			return false;
-		}
+
+
 		return true;
 	}
 }
