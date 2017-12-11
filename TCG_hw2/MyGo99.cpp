@@ -46,6 +46,76 @@ const int DirectionY[MAXDIRECTION] = { 0, 1, 0,-1};
 const char LabelX[]="0ABCDEFGHJ";
 
 
+
+
+struct Node
+{
+	int Board[BOUNDARYSIZE][BOUNDARYSIZE];
+	Node child[HISTORYLENGTH];
+	Node *parent;
+	double ucb_score;
+	double win;
+	double sim_time;
+	double total_sim;
+	int num_legal_moves;
+	// int MoveList[HISTORYLENGTH];
+	int turn;
+
+};
+
+
+double culUcb(double win, double sim_time, double total_sim){
+	return win/sim_time + C_VALUE*sqrt(log(total_sim)/sim_time);
+}
+
+struct Node *newNode(){
+	Node *node = new Node;
+	node->Board = NULL;
+	node->child = NULL;
+	node->parent = NULL;
+	node->ucb_score = 0.0;
+	node->win = 0.0;
+	node->sim_time = 0.0;
+	node->total_sim = 0.0;
+	node->num_legal_moves = 0;
+	node->turn = 0;
+}
+
+struct Node insertNode(Node *node, int index){
+	static Node *p;
+	Node *retNode;
+
+	if(node == NULL){
+		retNode = newNode();
+		retNode->parent = p;
+		return retNode;
+	}
+
+	p = node;
+
+}
+
+void expand(Node *node, int MoveList[HISTORYLENGTH], int time){
+
+}
+
+void simulate(Node *node, int time){
+
+}
+
+
+void simAllChildren(Node *node){
+	for(int i = 0; i < node->num_legal_moves; i++){
+		Node *childNode = node->child[i];
+
+	}
+
+
+
+
+}
+
+
 /*
  * This function reset the board, the board intersections are labeled with 0,
  * the boundary intersections are labeled with 3.
