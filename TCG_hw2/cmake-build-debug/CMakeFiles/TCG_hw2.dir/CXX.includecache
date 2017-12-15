@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/Jonathanlee/Desktop/TCG/TCG2017/TCG_hw2/MyGo99.cpp
+iostream
+-
+cstdio
+-
+cstring
+-
+cstdlib
+-
+ctime
+-
+math.h
+-
+

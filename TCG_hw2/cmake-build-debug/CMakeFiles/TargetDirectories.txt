@@ -1,0 +1,3 @@
+/Users/Jonathanlee/Desktop/TCG/TCG2017/TCG_hw2/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/Jonathanlee/Desktop/TCG/TCG2017/TCG_hw2/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/Jonathanlee/Desktop/TCG/TCG2017/TCG_hw2/cmake-build-debug/CMakeFiles/TCG_hw2.dir

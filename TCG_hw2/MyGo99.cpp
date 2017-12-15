@@ -10,6 +10,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <ctime>
+#include <math.h>
 
 #define BOARDSIZE        9
 #define BOUNDARYSIZE    11
@@ -36,11 +37,15 @@
 
 #define LOCALVERSION      1
 #define GTPVERSION        2
+
+#define C_VALUE        1.18
+#define FIRST_TIME_SIM	10
+#define SECOND_TIME_SIM	5
  
 using namespace std;
 int _board_size = BOARDSIZE;
 int _board_boundary = BOUNDARYSIZE;
-double _komi =  DEFAULTKOMI;
+double _komi =  DEFAULTKOMI-0.5;
 const int DirectionX[MAXDIRECTION] = {-1, 0, 1, 0};
 const int DirectionY[MAXDIRECTION] = { 0, 1, 0,-1};
 const char LabelX[]="0ABCDEFGHJ";
@@ -48,72 +53,9 @@ const char LabelX[]="0ABCDEFGHJ";
 
 
 
-struct Node
-{
-	int Board[BOUNDARYSIZE][BOUNDARYSIZE];
-	Node child[HISTORYLENGTH];
-	Node *parent;
-	double ucb_score;
-	double win;
-	double sim_time;
-	double total_sim;
-	int num_legal_moves;
-	// int MoveList[HISTORYLENGTH];
-	int turn;
-
-};
-
-
-double culUcb(double win, double sim_time, double total_sim){
-	return win/sim_time + C_VALUE*sqrt(log(total_sim)/sim_time);
-}
-
-struct Node *newNode(){
-	Node *node = new Node;
-	node->Board = NULL;
-	node->child = NULL;
-	node->parent = NULL;
-	node->ucb_score = 0.0;
-	node->win = 0.0;
-	node->sim_time = 0.0;
-	node->total_sim = 0.0;
-	node->num_legal_moves = 0;
-	node->turn = 0;
-}
-
-struct Node insertNode(Node *node, int index){
-	static Node *p;
-	Node *retNode;
-
-	if(node == NULL){
-		retNode = newNode();
-		retNode->parent = p;
-		return retNode;
-	}
-
-	p = node;
-
-}
-
-void expand(Node *node, int MoveList[HISTORYLENGTH], int time){
-
-}
-
-void simulate(Node *node, int time){
-
-}
-
-
-void simAllChildren(Node *node){
-	for(int i = 0; i < node->num_legal_moves; i++){
-		Node *childNode = node->child[i];
-
-	}
 
 
 
-
-}
 
 
 /*
@@ -485,12 +427,333 @@ void do_move(int Board[BOUNDARYSIZE][BOUNDARYSIZE], int turn, int move) {
  * game length "game_length"
  * */
 void record(int Board[BOUNDARYSIZE][BOUNDARYSIZE], int GameRecord[MAXGAMELENGTH][BOUNDARYSIZE][BOUNDARYSIZE], int game_length) {
-		for (int i = 0 ; i < BOUNDARYSIZE; ++i) {
-		    for (int j = 0 ; j < BOUNDARYSIZE; ++j) {
-			GameRecord[game_length][i][j] = Board[i][j];
-		    }
-		}
+	std::copy(&Board[0][0], &Board[0][0] + BOUNDARYSIZE*BOUNDARYSIZE, &GameRecord[game_length][0][0]);
+//		for (int i = 0 ; i < BOUNDARYSIZE; ++i) {
+//		    for (int j = 0 ; j < BOUNDARYSIZE; ++j) {
+//			GameRecord[game_length][i][j] = Board[i][j];
+//		    }
+//		}
 }
+
+/*
+ * This function counts the number of points remains in the board by Black's view
+ * */
+double final_score(int Board[BOUNDARYSIZE][BOUNDARYSIZE]) {
+	int black, white;
+	black = white = 0;
+	int is_black, is_white;
+	for (int i = 1 ; i <= BOARDSIZE; ++i) {
+		for (int j = 1; j <= BOARDSIZE; ++j) {
+			switch(Board[i][j]) {
+				case EMPTY:
+					is_black = is_white = 0;
+					for(int d = 0 ; d < MAXDIRECTION; ++d) {
+						if (Board[i+DirectionX[d]][j+DirectionY[d]] == BLACK) is_black = 1;
+						if (Board[i+DirectionX[d]][j+DirectionY[d]] == WHITE) is_white = 1;
+					}
+					if (is_black + is_white == 1) {
+						black += is_black;
+						white += is_white;
+					}
+					break;
+				case WHITE:
+					white++;
+					break;
+				case BLACK:
+					black++;
+					break;
+			}
+		}
+	}
+	return black - white;
+}
+
+struct Node {
+	int Board[BOUNDARYSIZE][BOUNDARYSIZE];
+	Node *child[HISTORYLENGTH];
+	Node *parent;
+	double ucb_score;
+	double win;
+	double sim_time;
+	int num_legal_moves;
+	// int MoveList[HISTORYLENGTH];
+	int turn;
+	int GameRecord[MAXGAMELENGTH][BOUNDARYSIZE][BOUNDARYSIZE];
+	int game_length;
+	int move;
+	bool expended;
+};
+
+
+double calUcb(double win, double sim_time, double total_sim){
+	return win/sim_time + C_VALUE*sqrt(log(total_sim)/sim_time);
+}
+
+int change_turn(int turn){
+	if(turn == BLACK){
+		return WHITE;
+	}else{
+		return BLACK;
+	}
+}
+
+Node *newNode(){
+	Node *node = new Node;
+	// node->Board = NULL;
+//	cout << "Board[0][0]: " << node-> Board[0][0] <<  endl;
+	// node->child = NULL;
+	// node->GameRecord = NULL;
+//	cout << "Record[0][0][0]: " << node-> GameRecord[0][0][0] <<  endl;
+	node->parent = NULL;
+	node->ucb_score = 0.0;
+	node->win = 0.0;
+	node->sim_time = 0.0;
+	node->num_legal_moves = 0;
+	node->turn = 0;
+	node->game_length = 0;
+	node->move = 0;
+	node->expended = false;
+
+	return node;
+}
+
+void copyGameRecord(int From[MAXGAMELENGTH][BOUNDARYSIZE][BOUNDARYSIZE], int To[MAXGAMELENGTH][BOUNDARYSIZE][BOUNDARYSIZE], int length){
+//	cout << "copy record start" << endl;
+//	for(int i=0; i<length; i++){
+//		for(int j=0; j<BOUNDARYSIZE; j++){
+//			for(int k=0; k<BOUNDARYSIZE; k++){
+//				To[i][j][k] = From[i][j][k];
+//			}
+//		}
+//	}
+	for(int i=0; i < length; i++){
+		std::copy(&From[i][0][0], &From[i][0][0] + BOUNDARYSIZE*BOUNDARYSIZE, &To[i][0][0]);
+	}
+}
+
+void copyBoard(int From[BOUNDARYSIZE][BOUNDARYSIZE], int To[BOUNDARYSIZE][BOUNDARYSIZE]){
+//	cout << "From[0][0]" << From[0][0] << endl;
+//	cout << "To[0][0]" << To[0][0] << endl;
+//	for(int i=0; i<BOUNDARYSIZE; i++){
+//		for(int j=0; j<BOUNDARYSIZE; j++){
+//			To[i][j] = From[i][j];
+//		}
+//	}
+	std::copy(&From[0][0], &From[0][0] + BOUNDARYSIZE*BOUNDARYSIZE, &To[0][0]);
+//	cout << "copy Board end" << endl;
+}
+
+//add a new node to the node at child[index],
+//and set parent and turn, game_length+1
+//set Board, GameRecord as the same with parent
+Node *addNode(Node *node, int index){
+
+
+	// if(node == NULL){
+	// 	retNode = newNode();
+	// 	retNode->parent = p;
+	// 	return retNode;
+	// }
+
+	Node *retNode = newNode();
+	node->child[index] = retNode;
+	retNode->parent = node;
+
+	//set Board, GameRecord, game_length
+	copyBoard(node->Board, retNode->Board);
+	copyGameRecord(node->GameRecord, retNode->GameRecord, node->game_length);
+	retNode->game_length = node->game_length + 1;
+
+	if(node->turn == BLACK){
+		retNode->turn = WHITE;
+	}else{
+		retNode->turn = BLACK;
+	}
+	return retNode;
+}
+
+Node *select(Node *node, int turn){
+//	cout << "selecting start" << endl;
+	Node *retNode;
+	if(!node->expended){
+		retNode = node;
+		return retNode;
+	}
+
+//	cout << "child not null" << endl;
+
+	//if node.turn == turn => find max child ucb, else find mix ucb
+	double maxUcb = -1;
+	double minUcb = 10000;
+	int selectNodeIndex = 0;
+	for(int i=0; i<node->num_legal_moves; i++){
+		Node *childNode = node->child[i];
+		childNode->ucb_score = calUcb(childNode->win, childNode->sim_time, node-> sim_time);
+//		cout << "ucb score: " << childNode->ucb_score <<endl;
+		if(node->turn == turn){
+//			cout << "max node" << endl;
+			if(maxUcb < childNode->ucb_score){
+				maxUcb = childNode->ucb_score;
+				selectNodeIndex = i;
+			}
+		}else{
+//			cout << "min node" << endl;
+			if(minUcb > childNode->ucb_score){
+				minUcb = childNode->ucb_score;
+				selectNodeIndex = i;
+			}
+		}
+	}
+	retNode = select(node->child[selectNodeIndex], turn);
+	return retNode;
+}
+
+void expand(Node *node){
+	int MoveList[HISTORYLENGTH];
+	int num_legal_moves = 0;
+
+	num_legal_moves = gen_legal_move(node->Board, change_turn(node->turn), node->game_length, node->GameRecord, MoveList);
+
+	cout << "expand node's move: " << node->move << endl;
+//	cout << "expand child number: " << num_legal_moves << endl;
+	node->num_legal_moves = num_legal_moves;
+	//find children's Board and GameRecord AND MOVE!!, expanded to true;
+	for(int i=0; i<num_legal_moves; i++){
+		Node *childNode = addNode(node, i);
+		childNode->move = MoveList[i];
+		do_move(childNode->Board, childNode->turn, MoveList[i]);
+		record(childNode->Board, childNode->GameRecord, childNode->game_length);
+//		cout << "child" << i << "move =" << node->child[i]->move << endl;
+	}
+	node->expended = true;
+}
+
+//have problem
+int simulate(Node *node, int time){
+	int wins = 0;
+	for(int i=0; i<time; i++){
+		bool finish = false;
+		int t_Board[BOUNDARYSIZE][BOUNDARYSIZE];
+		int t_turn = node->turn;
+		int t_game_length = node->game_length;
+		int t_GameRecord[MAXGAMELENGTH][BOUNDARYSIZE][BOUNDARYSIZE];
+		//set Board, GameRecord
+		copyBoard(node->Board, t_Board);
+		copyGameRecord(node->GameRecord, t_GameRecord, node->game_length);
+		//flag of a player have passed
+		bool pass1 = false;
+
+		while(!finish){
+			t_turn = change_turn(t_turn);
+			t_game_length += 1;
+			int MoveList[HISTORYLENGTH];
+			int return_move = 0;
+			int num_legal_moves = 0;
+
+			num_legal_moves = gen_legal_move(t_Board, t_turn, t_game_length, t_GameRecord, MoveList);
+			return_move = rand_pick_move(num_legal_moves, MoveList);
+//			cout << "sim turn: " << t_turn << endl;
+			do_move(t_Board, t_turn, return_move);
+			record(t_Board, t_GameRecord, t_game_length);
+			if(return_move == 0){
+				if(!pass1){
+					pass1 = true;
+				}else{
+					finish = true;
+				}
+			}else{
+				pass1 = false;
+			}
+		}
+		//calculate result
+		double result;
+		result = final_score(t_Board);
+//		result -= _komi;  //maybe not use komi
+		int win_turn = 0;
+		if (result > 0.0) { // Black win
+			win_turn = BLACK;
+		}
+		if (result < 0.0) { // White win
+			win_turn = WHITE;
+		}
+		else { // draw
+
+		}
+		if(node->turn == win_turn){
+			wins++;
+//			cout << "sim win! ";
+		}else{
+//			cout << "sim lose! ";
+		}
+	}
+
+	return wins;
+}
+
+void back_propagation(Node *node, int wins, int local_time){
+	Node *p = node->parent;
+	node->win += wins;
+	node->sim_time += local_time;
+//	node->total_sim = p->sim_time + local_time;
+//	node->ucb_score = calUcb(node->win, node->sim_time, node-> total_sim);
+	cout << "node(" << node->move << ") win rate: " << node->win << "/" << node->sim_time <<endl;
+	if(node->parent == NULL){
+		return;
+	}
+	back_propagation(p, local_time-wins, local_time);
+}
+
+
+void sim_all_children(Node *node){
+	cout << "node children num: " << node->num_legal_moves << endl;
+	for(int i=0; i < node->num_legal_moves; i++){
+		Node *childNode = node->child[i];
+		//sim
+		int wins = simulate(childNode, FIRST_TIME_SIM);
+		//back propagation
+		back_propagation(childNode, wins, FIRST_TIME_SIM);
+	}
+}
+
+
+Node* init_root(int Board[BOUNDARYSIZE][BOUNDARYSIZE], int turn, int game_length, int GameRecord[MAXGAMELENGTH][BOUNDARYSIZE][BOUNDARYSIZE]){
+	cout << "init start" << endl;
+	Node *root = newNode();
+	copyBoard(Board, root->Board);
+//	cout << "copy board success" << endl;
+	copyGameRecord(GameRecord, root->GameRecord, game_length);
+	cout << "init success" << endl;
+	root->game_length = game_length;
+	root->turn = turn;
+	return root;
+}
+
+int mcts_ucb_pick_move(Node *root, clock_t end_t){
+	int time = 0;
+
+	while(time < 5 /*clock() < end_t - CLOCKS_PER_SEC*/){
+		cout << "new tracing tree" << endl;
+		Node *selectNode = select(root, root->turn);
+//		cout << "select success" << endl;
+		expand(selectNode);
+		cout << "expand success" << endl;
+		sim_all_children(selectNode);
+		cout << "sim success" << endl;
+		time++;
+	}
+
+	double maxUcb = 0;
+	int move = 0;
+	for(int i=0; i<root->num_legal_moves; i++){
+		if(maxUcb < root->child[i]->ucb_score){
+			maxUcb = root->child[i]->ucb_score;
+			move = root->child[i]->move;
+		}
+	}
+	return move;
+}
+
+
 /* 
  * This function randomly generate one legal move (x, y) with return value x*10+y,
  * if there is no legal move the function will return 0.
@@ -502,50 +765,29 @@ int genmove(int Board[BOUNDARYSIZE][BOUNDARYSIZE], int turn, int time_limit, int
     // calculate the time bound
     end_t = start_t + CLOCKS_PER_SEC * time_limit;
 
-    int MoveList[HISTORYLENGTH];
-    int num_legal_moves = 0;
+//    int MoveList[HISTORYLENGTH];
+//    int num_legal_moves = 0;
     int return_move = 0;
+//
+//    num_legal_moves = gen_legal_move(Board, turn, game_length, GameRecord, MoveList);
+//
+//    return_move = rand_pick_move(num_legal_moves, MoveList);
+	cout << "gen start" << endl;
 
-    num_legal_moves = gen_legal_move(Board, turn, game_length, GameRecord, MoveList);
+	Node *root = init_root(Board, turn, game_length, GameRecord);
 
-    return_move = rand_pick_move(num_legal_moves, MoveList);
+	cout << root->turn << endl;
+	cout << "pick move start" << endl;
+
+	return_move = mcts_ucb_pick_move(root, end_t);
+
+	cout << "pick move success" << endl;
 
     do_move(Board, turn, return_move);
 
     return return_move % 100;
 }
-/*
- * This function counts the number of points remains in the board by Black's view
- * */
-double final_score(int Board[BOUNDARYSIZE][BOUNDARYSIZE]) {
-    int black, white;
-    black = white = 0;
-    int is_black, is_white;
-    for (int i = 1 ; i <= BOARDSIZE; ++i) {
-	for (int j = 1; j <= BOARDSIZE; ++j) {
-	    switch(Board[i][j]) {
-		case EMPTY:
-		    is_black = is_white = 0;
-		    for(int d = 0 ; d < MAXDIRECTION; ++d) {
-			if (Board[i+DirectionX[d]][j+DirectionY[d]] == BLACK) is_black = 1;
-			if (Board[i+DirectionX[d]][j+DirectionY[d]] == WHITE) is_white = 1;
-		    }
-		    if (is_black + is_white == 1) {
-			black += is_black;
-			white += is_white;
-		    }
-		    break;
-		case WHITE:
-		    white++;
-		    break;
-		case BLACK:
-		    black++;
-		    break;
-	    }
-	}
-    }
-    return black - white;
-}
+
 /* 
  * Following are commands for Go Text Protocol (GTP)
  *
@@ -781,10 +1023,13 @@ void gtp_main(int display) {
 	}
     }
 }
+
+
+
 int main(int argc, char* argv[]) {
 //    int type = GTPVERSION;// 1: local version, 2: gtp version
     int type = GTPVERSION;// 1: local version, 2: gtp version
-    int display = 0; // 1: display, 2 nodisplay
+    int display = 1; // 1: display, 2 nodisplay
     if (argc > 1) {
 	if (strcmp(argv[1], "-display")==0) {
 	    display = 1;
