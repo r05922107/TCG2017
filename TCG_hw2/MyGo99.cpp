@@ -90,10 +90,20 @@ int find_liberty(int X, int Y, int label, int Board[BOUNDARYSIZE][BOUNDARYSIZE],
 	// This neighboorhood is empty
 	if (Board[X+DirectionX[d]][Y+DirectionY[d]] == EMPTY){
 	    total_liberty++;
+
+		//use for efficacy
+		if(total_liberty > 1){
+			return total_liberty;
+		}
 	}
 	// This neighboorhood is self stone
 	else if (Board[X+DirectionX[d]][Y+DirectionY[d]] == Board[X][Y]) {
 	    total_liberty += find_liberty(X+DirectionX[d], Y+DirectionY[d], label, Board, ConnectBoard);
+
+		//use for efficacy
+		if(total_liberty > 1){
+			return total_liberty;
+		}
 	}
     }
     return total_liberty;
@@ -369,16 +379,21 @@ int gen_legal_move(int Board[BOUNDARYSIZE][BOUNDARYSIZE], int turn, int game_len
 			NextBoard[x][y] = turn;
 		    }
 		    // Check the history to avoid the repeat board
+			 set<int[BOUNDARYSIZE][BOUNDARYSIZE]> record_set = set(GameRecord[0], GameRecord[game_length]);
 		    bool repeat_move = 0;
 		    for (int t = 0 ; t < game_length; ++t) {
 			bool repeat_flag = 1;
-			for (int i = 1; i <=BOARDSIZE; ++i) {
-			    for (int j = 1; j <=BOARDSIZE; ++j) {
-				if (NextBoard[i][j] != GameRecord[t][i][j]) {
-				    repeat_flag = 0;
+				//try to use set
+				if(!record_set.find(NextBoard)){
+					repeat_flag = 0;
 				}
-			    }
-			}
+//			for (int i = 1; i <=BOARDSIZE; ++i) {
+//			    for (int j = 1; j <=BOARDSIZE; ++j) {
+//				if (NextBoard[i][j] != GameRecord[t][i][j]) {
+//				    repeat_flag = 0;
+//				}
+//			    }
+//			}
 			if (repeat_flag == 1) {
 			    repeat_move = 1;
 			    break;
@@ -628,7 +643,7 @@ void expand(Node *node){
 	node->expended = true;
 }
 
-//have problem
+
 int simulate(Node *node, int time){
 	int wins = 0;
 	for(int i=0; i<time; i++){
@@ -649,11 +664,29 @@ int simulate(Node *node, int time){
 			int MoveList[HISTORYLENGTH];
 			int return_move = 0;
 			int num_legal_moves = 0;
+			int try_limit = 30;
+			int trytry = 0;
+			bool try_result = false;
 
-			num_legal_moves = gen_legal_move(t_Board, t_turn, t_game_length, t_GameRecord, MoveList);
-			return_move = rand_pick_move(num_legal_moves, MoveList);
+			while(trytry <= try_limit){
+				int rand_move = (rand()%89) + 11;
+				if(update_board_check(t_Board, rand_move/10, rand_move%10, t_turn)){
+					//add checking for last Board is same
+
+					try_result = true;
+					break;
+				}
+				trytry++;
+			}
+
+			if(!try_result){
+				num_legal_moves = gen_legal_move(t_Board, t_turn, t_game_length, t_GameRecord, MoveList);
+				return_move = rand_pick_move(num_legal_moves, MoveList);
 //			cout << "sim turn: " << t_turn << endl;
-			do_move(t_Board, t_turn, return_move);
+				do_move(t_Board, t_turn, return_move);
+			}
+
+
 			record(t_Board, t_GameRecord, t_game_length);
 			if(return_move == 0){
 				if(!pass1){
