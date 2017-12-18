@@ -11,11 +11,12 @@
 #include <cstdlib>
 #include <ctime>
 #include <math.h>
+#include <set>
 
 #define BOARDSIZE        9
 #define BOUNDARYSIZE    11
 #define COMMANDLENGTH 1000
-#define DEFAULTTIME     10
+#define DEFAULTTIME      5
 #define DEFAULTKOMI      7
 
 #define MAXGAMELENGTH 1000
@@ -379,21 +380,22 @@ int gen_legal_move(int Board[BOUNDARYSIZE][BOUNDARYSIZE], int turn, int game_len
 			NextBoard[x][y] = turn;
 		    }
 		    // Check the history to avoid the repeat board
-			 set<int[BOUNDARYSIZE][BOUNDARYSIZE]> record_set = set(GameRecord[0], GameRecord[game_length]);
+//			set<int[BOUNDARYSIZE][BOUNDARYSIZE]> record_set = new set<int[BOUNDARYSIZE][BOUNDARYSIZE]>(GameRecord[0], GameRecord[game_length]);
 		    bool repeat_move = 0;
 		    for (int t = 0 ; t < game_length; ++t) {
 			bool repeat_flag = 1;
 				//try to use set
-				if(!record_set.find(NextBoard)){
-					repeat_flag = 0;
-				}
-//			for (int i = 1; i <=BOARDSIZE; ++i) {
-//			    for (int j = 1; j <=BOARDSIZE; ++j) {
-//				if (NextBoard[i][j] != GameRecord[t][i][j]) {
-//				    repeat_flag = 0;
-//				}
-//			    }
+//			auto search = record_set.find(NextBoard);
+//			if(search == record_set.end()){
+//				repeat_flag = 0;
 //			}
+			for (int i = 1; i <=BOARDSIZE; ++i) {
+			    for (int j = 1; j <=BOARDSIZE; ++j) {
+				if (NextBoard[i][j] != GameRecord[t][i][j]) {
+				    repeat_flag = 0;
+				}
+			    }
+			}
 			if (repeat_flag == 1) {
 			    repeat_move = 1;
 			    break;
@@ -629,7 +631,7 @@ void expand(Node *node){
 
 	num_legal_moves = gen_legal_move(node->Board, change_turn(node->turn), node->game_length, node->GameRecord, MoveList);
 
-	cout << "expand node's move: " << node->move << endl;
+//	cout << "expand node's move: " << node->move << endl;
 //	cout << "expand child number: " << num_legal_moves << endl;
 	node->num_legal_moves = num_legal_moves;
 	//find children's Board and GameRecord AND MOVE!!, expanded to true;
@@ -665,13 +667,18 @@ int simulate(Node *node, int time){
 			int return_move = 0;
 			int num_legal_moves = 0;
 			int try_limit = 30;
+			int length_limit = 55;
 			int trytry = 0;
 			bool try_result = false;
 
-			while(trytry <= try_limit){
-				int rand_move = (rand()%89) + 11;
-				if(update_board_check(t_Board, rand_move/10, rand_move%10, t_turn)){
-					//add checking for last Board is same
+			while(trytry <= try_limit && t_game_length < length_limit){
+				int rand_x = (rand()%9) + 1;
+				int rand_y = (rand()%9) + 1;
+				if(update_board_check(t_Board, rand_x, rand_y, t_turn)){
+					//add checking for last Board is same, use max limit now
+					if(trytry > 300){
+						break;
+					}
 
 					try_result = true;
 					break;
@@ -729,7 +736,7 @@ void back_propagation(Node *node, int wins, int local_time){
 	node->sim_time += local_time;
 //	node->total_sim = p->sim_time + local_time;
 //	node->ucb_score = calUcb(node->win, node->sim_time, node-> total_sim);
-	cout << "node(" << node->move << ") win rate: " << node->win << "/" << node->sim_time <<endl;
+//	cout << "node(" << node->move << ") win rate: " << node->win << "/" << node->sim_time <<endl;
 	if(node->parent == NULL){
 		return;
 	}
@@ -737,9 +744,12 @@ void back_propagation(Node *node, int wins, int local_time){
 }
 
 
-void sim_all_children(Node *node){
-	cout << "node children num: " << node->num_legal_moves << endl;
+void sim_all_children(Node *node, clock_t end_t){
+//	cout << "node children num: " << node->num_legal_moves << endl;
 	for(int i=0; i < node->num_legal_moves; i++){
+		if(clock() > end_t){
+			break;
+		}
 		Node *childNode = node->child[i];
 		//sim
 		int wins = simulate(childNode, FIRST_TIME_SIM);
@@ -750,12 +760,12 @@ void sim_all_children(Node *node){
 
 
 Node* init_root(int Board[BOUNDARYSIZE][BOUNDARYSIZE], int turn, int game_length, int GameRecord[MAXGAMELENGTH][BOUNDARYSIZE][BOUNDARYSIZE]){
-	cout << "init start" << endl;
+//	cout << "init start" << endl;
 	Node *root = newNode();
 	copyBoard(Board, root->Board);
 //	cout << "copy board success" << endl;
 	copyGameRecord(GameRecord, root->GameRecord, game_length);
-	cout << "init success" << endl;
+//	cout << "init success" << endl;
 	root->game_length = game_length;
 	root->turn = turn;
 	return root;
@@ -763,15 +773,16 @@ Node* init_root(int Board[BOUNDARYSIZE][BOUNDARYSIZE], int turn, int game_length
 
 int mcts_ucb_pick_move(Node *root, clock_t end_t){
 	int time = 0;
+	end_t = end_t - CLOCKS_PER_SEC;
 
-	while(time < 5 /*clock() < end_t - CLOCKS_PER_SEC*/){
-		cout << "new tracing tree" << endl;
+	while(/*time < 5*/ clock() < end_t){
+//		cout << "new tracing tree" << endl;
 		Node *selectNode = select(root, root->turn);
 //		cout << "select success" << endl;
 		expand(selectNode);
-		cout << "expand success" << endl;
-		sim_all_children(selectNode);
-		cout << "sim success" << endl;
+//		cout << "expand success" << endl;
+		sim_all_children(selectNode, end_t);
+//		cout << "sim success" << endl;
 		time++;
 	}
 
@@ -805,16 +816,16 @@ int genmove(int Board[BOUNDARYSIZE][BOUNDARYSIZE], int turn, int time_limit, int
 //    num_legal_moves = gen_legal_move(Board, turn, game_length, GameRecord, MoveList);
 //
 //    return_move = rand_pick_move(num_legal_moves, MoveList);
-	cout << "gen start" << endl;
+//	cout << "gen start" << endl;
 
 	Node *root = init_root(Board, turn, game_length, GameRecord);
 
-	cout << root->turn << endl;
-	cout << "pick move start" << endl;
+//	cout << root->turn << endl;
+//	cout << "pick move start" << endl;
 
 	return_move = mcts_ucb_pick_move(root, end_t);
 
-	cout << "pick move success" << endl;
+//	cout << "pick move success" << endl;
 
     do_move(Board, turn, return_move);
 
@@ -892,7 +903,7 @@ void gtp_protocol_version() {
     cout <<"= 2"<<endl<< endl;
 }
 void gtp_name() {
-    cout <<"= TCG-randomGo99" << endl<< endl;
+    cout <<"= TCG-R05922107" << endl<< endl;
 }
 void gtp_version() {
     cout << "= 1.02" << endl << endl;
