@@ -1,0 +1,3 @@
+b G2, win rate = 0.560606, sim = 330
+w A1, win rate = 0.6, sim = 10
+

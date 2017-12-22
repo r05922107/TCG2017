@@ -1,0 +1,2 @@
+b F2, win rate = 0.24, ucb score = 0.772902, sim = 50
+
