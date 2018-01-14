@@ -1,0 +1,4 @@
+w H2, win rate = 1, ucb score = 1.06025, sim = 4250
+b r9, win rate = 1, ucb score = 0.278485, sim = 150
+w A5, win rate = 1, ucb score = 1.83527, sim = 10
+
