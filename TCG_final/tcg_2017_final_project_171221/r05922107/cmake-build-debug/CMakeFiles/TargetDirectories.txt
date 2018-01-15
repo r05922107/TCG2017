@@ -1,3 +1,3 @@
-D:/workspace/TCG/TCG2017/TCG_final/tcg_2017_final_project_171221/r05922107/cmake-build-debug/CMakeFiles/r05922107.dir
-D:/workspace/TCG/TCG2017/TCG_final/tcg_2017_final_project_171221/r05922107/cmake-build-debug/CMakeFiles/edit_cache.dir
-D:/workspace/TCG/TCG2017/TCG_final/tcg_2017_final_project_171221/r05922107/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/Jonathanlee/Desktop/TCG/TCG2017/TCG_final/tcg_2017_final_project_171221/r05922107/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/Jonathanlee/Desktop/TCG/TCG2017/TCG_final/tcg_2017_final_project_171221/r05922107/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/Jonathanlee/Desktop/TCG/TCG2017/TCG_final/tcg_2017_final_project_171221/r05922107/cmake-build-debug/CMakeFiles/r05922107.dir

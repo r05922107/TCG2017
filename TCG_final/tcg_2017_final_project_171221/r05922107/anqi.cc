@@ -353,3 +353,19 @@ void BOARD::DoMove(MOV m, FIN f) {
 	Flip(m.st, f);
     }
 }
+
+int BOARD::getCntNum() {
+	int cntNum = 0;
+	for(int i=0; i<14; i++){
+        cntNum += cnt[i];
+	}
+	return cntNum;
+}
+
+int comparable(const void * a, const void * b){
+    MOV a_mov = *(MOV*)a;
+    MOV b_mov = *(MOV*)b;
+    return b_mov.score - a_mov.score;
+}
+
+
