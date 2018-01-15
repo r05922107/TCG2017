@@ -11,7 +11,7 @@ ee:
 	cp search ../ubuntu/EnterRoom/Search/
 
 clean:
-	rm search 2>NUL
+	DEL search 2>NUL
 
 
 test: testboard.cpp anqi.cc
