@@ -42,24 +42,42 @@ typedef int POS;
 struct MOV {
 	POS st; // 起點
 	POS ed; // 終點 // 若 ed==st 表示是翻子
+    double score;
 
 	MOV() {}
-	MOV(POS s,POS e):st(s),ed(e) {}
+	MOV(POS s,POS e):st(s),ed(e) {
+        score = 0;
+    }
 
 	bool operator==(const MOV &x) const {return st==x.st&&ed==x.ed;}
 	MOV operator=(const MOV &x) {st=x.st;ed=x.ed;return MOV(x.st, x.ed);}
 };
 
+int comparable (const void * a, const void * b);
+
 struct MOVLST {
 	int num;     // 走法數(移動+吃子,不包括翻子)
-	MOV mov[68];
+	MOV mov[100];
+
+	MOVLST(){
+		num = 0;
+	}
+
+    void sort(){
+        qsort(mov, num, sizeof(mov[0]), comparable);
+    }
+
 };
+
+typedef struct flip_chess_probability {
+    FIN fin;
+    double probability;
+}FLIP_PROB;
 
 struct BOARD {
 	CLR who;     // 現在輪到那一方下
 	FIN fin[32]; // 各個位置上面擺了啥
 	int cnt[14]; // 各種棋子的未翻開數量
-	int totalCnt;
 
 	void NewGame();              // 開新遊戲
 	int  LoadGame(const char*);  // 載入遊戲並傳回時限(單位:秒)
@@ -73,6 +91,8 @@ struct BOARD {
 	void DoMove(MOV m, FIN f) ;
 	//void Init(int Board[32], int Piece[14], int Color);
 	void Init(char Board[32], int Piece[14], int Color);
+
+	int getCntNum();  //get cnt num
 };
 
 CLR  GetColor(FIN);    // 算出棋子的顏色
