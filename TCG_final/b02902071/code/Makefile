@@ -1,7 +1,7 @@
-LDFLAGS=-O2 -static -s -lws2_32
+LDFLAGS=-O2 -static -s 
 .PHONY:	clean
 search:	main.cc anqi.cc ClientSocket.cpp Protocol.cpp
-	$(CXX) -o $@ $(LDFLAGS)
+	$(CXX) -o $@ $^ $(LDFLAGS)
 	chmod 777 $@ 
 
 cc:

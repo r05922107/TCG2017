@@ -5,8 +5,7 @@
 #include <iostream>
 #include <cstdio>
 #include <vector>
-#include <algorithm>
-#include <ctime>
+//#include <algorithm>
 
 #ifndef ANQI
 #include "anqi.hh"
@@ -24,7 +23,6 @@ int FLIP_DEEP_LIMIT = 8;
 
 int WIN_POINT = 999990;
 
-int INIT_COUNT[14] = {1,2,2,2,2,2,5,1,2,2,2,2,2,5};
 
 int STATIC_VAL[16] = {
         11000, 4900, 2400, 1100, 500, 3000, 50,
@@ -44,12 +42,19 @@ int ENEMY_VAL[9] = {11000, 4900, 2400, 1100, 500, 240, 110, 50, 20};
 clock_t startTime;  // start time
 clock_t timeOut;
 
+bool isEndPhase;
+
 int timeUp(){
+#ifdef _WINDOWS
+    return GetTickCount()-startTime>=timeOut;
+#else
     return clock() - startTime > timeOut;
+#endif
 }
 
 class Search{
 	public:
+
 		MOV getMove(BOARD &board, int remain_time){
             if(remain_time < 100000){
                 DEFAULT_TIME = 1;
@@ -266,6 +271,14 @@ class Search{
                     totalNum++;
                 }
             }
+
+            //check end phase
+            isEndPhase = false;
+            if(totalNum == redNum+blackNum && totalNum < 12){
+                isEndPhase = true;
+            }
+
+
             int cntNum = board.getCntNum();
 
             if(redNum ==0 && cntNum == 0){
@@ -295,16 +308,119 @@ class Search{
             bool isDynamic = false;
             if((live[0]>0 && live[13] > 0) || (live[7] > 0 && live[6] > 0)){
                 isDynamic = true;
-                
+
+                //king
+                //the enemy pawn number decide king's value
+                value[0] += K_ENEMY_VAL[live[13]];
+                value[1] += K_ENEMY_VAL[live[6]];
+
+                if(isEndPhase){
+                    DYNAMIC_VAL[0] = K_ENEMY_VAL[live[13]];
+                    DYNAMIC_VAL[7] = K_ENEMY_VAL[live[6]];
+                }
+
+                //G, M, R, N dynamic value
+                //count enemy G,M,R,N,C number as enemies
+                int enemies[2] = {0};
+                for(int i=0; i< 5; i++){
+                    enemies[0] += live[i+7];
+                    enemies[1] += live[i];
+
+                    //decide G, M, R, N value according to how many pieces can eat them
+                    if(i < 4){
+                        value[0] += ENEMY_VAL[enemies[0]] * live[i+1];
+                        value[1] += ENEMY_VAL[enemies[1]] * live[i+8];
+
+                        if(isEndPhase){
+                            DYNAMIC_VAL[i+1] = ENEMY_VAL[enemies[0]];
+                            DYNAMIC_VAL[i+8] = ENEMY_VAL[enemies[1]];
+                        }
+                    }
+                }
+                //int ENEMY_VAL[9] = {11000, 4900, 2400, 1100, 500, 240, 110, 50, 20};
+
+                //Cannon
+                //Cannon's value use static value
+                value[0] += live[5] * STATIC_VAL[5];
+                value[1] += live[12] * STATIC_VAL[12];
+
+                //Pawn
+                //if enemy's king is not dead, give pawn more value
+                value[0] += ENEMY_VAL[enemies[0] - live[7]] * live[6];
+                value[1] += ENEMY_VAL[enemies[1] - live[0]] * live[13];
+
+                if(isEndPhase){
+                    DYNAMIC_VAL[6] = ENEMY_VAL[enemies[0] - live[7]];
+                    DYNAMIC_VAL[13] = ENEMY_VAL[enemies[1] - live[0]];
+                }
 
 
 
+            }else{  //static piece value
+                for(int i=0; i< 7; i++){
+                    value[0] += live[i] * STATIC_VAL[i];
+                    value[1] += live[i+7] * STATIC_VAL[i+7];
+                }
 
+                //edge decreasing score
+                //edge -5 point, corner -10 point
+                for(int i=0; i<32; i++){
+                    if(i%4 == 0 || i%4 == 3){
+                        CLR clr = GetColor(board.fin[i]);
+                        if(clr != -1){
+                            value[clr] -= 5;
+                        }
+                    }
+
+                    if((i>=0 && i<=3) || (i>=28 && i<=31)){
+                        CLR clr = GetColor(board.fin[i]);
+                        if(clr != -1){
+                            value[clr] -= 5;
+                        }
+                    }
+                }
             }
 
 
+            //end phase
+//            if(isEndPhase){
+//                int *endValue;
+//                if(isDynamic){
+//                    endValue = DYNAMIC_VAL;
+//                }else{
+//                    endValue = STATIC_VAL;
+//                }
+//
+//                for(int i=0; i<7; i++){
+//
+//                }
+//
+//
+//
+//                //edge decreasing score
+//                //edge -20 point, corner -40 point
+//                for(int i=0; i<32; i++){
+//                    if(i%4 == 0 || i%4 == 3){
+//                        CLR clr = GetColor(board.fin[i]);
+//                        if(clr != -1){
+//                            value[clr] -= 20;
+//                        }
+//                    }
+//
+//                    if((i>=0 && i<=3) || (i>=28 && i<=31)){
+//                        CLR clr = GetColor(board.fin[i]);
+//                        if(clr != -1){
+//                            value[clr] -= 20;
+//                        }
+//                    }
+//                }
+//            }
 
-
+            if(board.who == 0){
+                return value[0] - value[1];
+            }else{
+                return value[1] - value[0];
+            }
 
 		}
 
