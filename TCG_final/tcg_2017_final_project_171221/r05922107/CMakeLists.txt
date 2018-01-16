@@ -11,4 +11,4 @@ add_executable(r05922107
         main.cc
         Protocol.cpp
         Protocol.h
-        Search.h)
+        Search.h HashTable.h HashTable.cpp)

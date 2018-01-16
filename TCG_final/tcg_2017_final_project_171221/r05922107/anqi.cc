@@ -16,6 +16,11 @@
 #include<windows.h>
 #endif
 
+#ifndef __hashtable__
+#include "HashTable.h"
+#endif
+
+
 static const char *tbl="KGMRNCPkgmrncpX-";
 
 static const char *nam[16]={
@@ -327,17 +332,31 @@ void BOARD::Flip(POS p,FIN f) {
 		for(i=0;i<14;i++)if((sum-=cnt[i])<0)break;
 		f=FIN(i);
 	}
+    //update hashValue
+    HT.pieceXOR(hashValue, FIN_X, p);
+    HT.pieceXOR(hashValue, f, p);
 	fin[p]=f;
 	cnt[f]--;
 	if(who==-1)who=GetColor(f);
 	who^=1;
+    HT.whoXOR(hashValue);
 }
 
 void BOARD::Move(MOV m) {
 	if(m.ed!=m.st) {
+        //update hashValue
+        HT.pieceXOR(hashValue, fin[m.st], m.st);
+        //check if eat
+        if(fin[m.ed] < 14){
+            //take out the piece from hash table
+            HT.pieceXOR(hashValue, fin[m.ed], m.ed);
+        }
 		fin[m.ed]=fin[m.st];
+        HT.pieceXOR(hashValue, fin[m.ed], m.ed);
 		fin[m.st]=FIN_E;
 		who^=1;
+        HT.whoXOR(hashValue);
+
 	} else {
 		Flip(m.st);
 	}
@@ -345,12 +364,21 @@ void BOARD::Move(MOV m) {
 
 void BOARD::DoMove(MOV m, FIN f) {
     if (m.ed!=m.st) {
-	fin[m.ed]=fin[m.st];
-	fin[m.st]=FIN_E;
-	who^=1;
+        //update hashValue
+        HT.pieceXOR(hashValue, fin[m.st], m.st);
+        //check if eat
+        if(fin[m.ed] < 14){
+            //take out the piece from hash table
+            HT.pieceXOR(hashValue, fin[m.ed], m.ed);
+        }
+        fin[m.ed]=fin[m.st];
+        HT.pieceXOR(hashValue, fin[m.ed], m.ed);
+        fin[m.st]=FIN_E;
+        who^=1;
+        HT.whoXOR(hashValue);
     }
     else {
-	Flip(m.st, f);
+        Flip(m.st, f);
     }
 }
 

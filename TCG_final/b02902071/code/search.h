@@ -9,7 +9,7 @@ bool isEndFlag;
 #include <iostream>
 #include <cstdio>
 #include <vector>
-
+#include <ctime>
 
 #ifndef __bitboard__
 #include "bitboard.h"

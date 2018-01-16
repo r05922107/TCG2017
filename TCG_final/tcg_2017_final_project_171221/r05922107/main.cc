@@ -13,13 +13,19 @@
 #include"Protocol.h"
 #include"ClientSocket.h"
 
-#ifndef ANQI
-#include"anqi.hh"
+#ifndef __hashtable__
+#include "HashTable.h"
 #endif
 
 #ifndef __search__
 #include "Search.h"
 #endif
+
+#ifndef ANQI
+#include"anqi.hh"
+#endif
+
+
 
 #ifdef _WINDOWS
 #include<windows.h>

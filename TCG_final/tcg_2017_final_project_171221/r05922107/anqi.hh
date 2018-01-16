@@ -1,6 +1,9 @@
 #ifndef ANQI
 #define ANQI
 
+#include <bitset>
+
+
 // (color)
 //  0 = 紅方 (大寫字母)
 //  1 = 黑方 (小寫字母)
@@ -44,7 +47,10 @@ struct MOV {
 	POS ed; // 終點 // 若 ed==st 表示是翻子
     double score;
 
-	MOV() {}
+	MOV() {
+        st = -1;
+        ed = -1;
+    }
 	MOV(POS s,POS e):st(s),ed(e) {
         score = 0;
     }
@@ -78,6 +84,7 @@ struct BOARD {
 	CLR who;     // 現在輪到那一方下
 	FIN fin[32]; // 各個位置上面擺了啥
 	int cnt[14]; // 各種棋子的未翻開數量
+    std::bitset<128> hashValue;
 
 	void NewGame();              // 開新遊戲
 	int  LoadGame(const char*);  // 載入遊戲並傳回時限(單位:秒)

@@ -1,4 +1,4 @@
-LDFLAGS=-static -s 
+LDFLAGS=-static -s -lws2_32
 .PHONY:	clean
 search.exe:	main.cc anqi.cc ClientSocket.cpp Protocol.cpp
 	$(CXX) -o $@ $^ $(LDFLAGS)

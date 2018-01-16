@@ -5,11 +5,13 @@
 #include <iostream>
 #include <cstdio>
 #include <vector>
+#include <ctime>
 //#include <algorithm>
 
 #ifndef ANQI
 #include "anqi.hh"
 #endif
+
 
 using namespace std;
 
@@ -44,6 +46,7 @@ clock_t timeOut;
 
 bool isEndPhase;
 
+
 int timeUp(){
 #ifdef _WINDOWS
     return GetTickCount()-startTime>=timeOut;
@@ -57,6 +60,7 @@ class Search{
 
 		MOV getMove(BOARD &board, int remain_time){
             if(remain_time < 100000){
+                cout << "Remain no time!" << endl;
                 DEFAULT_TIME = 1;
                 FLIP_DEFAULT_TIME = 1;
             }
@@ -69,6 +73,10 @@ class Search{
                 POS p = firstMove[rand()%4];
                 return MOV(p,p);
             }
+
+            //create hashTable
+            board.hashValue = HT.getHashValue(board);
+
 
             //search move
             startTime = clock();
@@ -116,10 +124,15 @@ class Search{
                 return bestMove;
             }
 
+            //if can eat , just eat
+            if(checkEatMove(board, bestMove)){
+                return bestMove;
+            }
+
 
             //search flip
             startTime = clock();
-            timeOut = DEFAULT_TIME * CLOCKS_PER_SEC;
+            timeOut = FLIP_DEFAULT_TIME * CLOCKS_PER_SEC;
 
             MOVLST flipList;
             vector<FLIP_PROB> probList;
@@ -168,6 +181,13 @@ class Search{
             return bestMove;
 		}
 
+        bool checkEatMove(BOARD &board, MOV move){
+            if(move.st == move.ed){
+                return false;
+            }
+            return board.fin[move.ed] < 14;
+        }
+
         void getFlipMove(BOARD &board, MOVLST &flipList){
             flipList.num = 0;
             for(int i=0; i<32; i++){
@@ -215,11 +235,19 @@ class Search{
             int n = beta;
 
             //transposition table hit or not
+            if(d>0){
+                Entry *entry = HT.get(board);
+                if(entry->valid && entry->depth > d){
+                    if(entry->exact){
+//                        cout << "Hash table hit exactly!" << endl;
+                        return entry->value;
+                    }
+//                    cout << "Hash table hit!" << endl;
+                    m = entry->value;
+                }
+            }
 
-
-
-
-
+            //search tree
             for(int i=0; i< moveList.num; i++){
                 BOARD nextBoard = copy(board);
                 nextBoard.Move(moveList.mov[i]);
@@ -239,15 +267,20 @@ class Search{
                 }
 
                 if(m >= beta){
+                    //update transposition table
+                    if(d>0){
+                        HT.update(board, m, d, false);
+                    }
+
                     return m;
                 }
                 n = max(alpha, m) + 1;
             }
 
             //update transposition table
-
-
-
+            if(d>0){
+                HT.update(board, m, d, true);
+            }
 
             return m;
 		}
@@ -423,11 +456,5 @@ class Search{
             }
 
 		}
-
-
-
-
-
-
-
 };
+
