@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <vector>
 #include <algorithm>
+#include <ctime>
 
 #ifndef ANQI
 #include "anqi.hh"
@@ -248,14 +249,18 @@ class Search{
 
 
 		int evaluate(BOARD &board){
-            int blackNum = 0;
-            int redNum = 0;
-            int totalNum = 0;
+            int blackNum = 0;  //bright black chess num
+            int redNum = 0;  //bright red chess num
+            int totalNum = 0;  //total bright and dark chess num
+            int live[14] = {0};  //every chess alive num
+
 			for(int i=0; i<32; i++){
                 if(board.fin[i] < 7){
                     redNum++;
+                    live[board.fin[i]]++;
                 }else if(board.fin[i] < 14){
                     blackNum++;
+                    live[board.fin[i]]++;
                 }
                 if(board.fin[i] != FIN_E){
                     totalNum++;
@@ -277,6 +282,26 @@ class Search{
                     return WIN_POINT;
                 }
             }
+
+            //red and black total value
+            int value[2] = {0, 0};
+
+            //count live
+            for(int i=0; i<14; i++){
+                live[i] += board.cnt[i];
+            }
+
+            //dynamic piece value
+            bool isDynamic = false;
+            if((live[0]>0 && live[13] > 0) || (live[7] > 0 && live[6] > 0)){
+                isDynamic = true;
+                
+
+
+
+
+            }
+
 
 
 
