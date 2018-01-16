@@ -37,7 +37,7 @@
         <entry file="file://$PROJECT_DIR$/Search.h">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="595">
-              <caret line="54" column="3" lean-forward="true" selection-start-line="54" selection-start-column="3" selection-end-line="54" selection-end-column="3" />
+              <caret line="54" column="38" lean-forward="true" selection-start-line="54" selection-start-column="38" selection-end-line="54" selection-end-column="38" />
               <folding />
             </state>
           </provider>
@@ -198,12 +198,12 @@
       <updated>1513146450225</updated>
       <workItem from="1513146452956" duration="79456000" />
       <workItem from="1515994881585" duration="1633000" />
-      <workItem from="1515997135059" duration="7132000" />
+      <workItem from="1515997135059" duration="7222000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="88221000" />
+    <option name="totallyTimeSpent" value="88311000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-1" y="23" width="1275" height="709" extended-state="6" />
@@ -373,7 +373,7 @@
     <entry file="file://$PROJECT_DIR$/Search.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="595">
-          <caret line="54" column="3" lean-forward="true" selection-start-line="54" selection-start-column="3" selection-end-line="54" selection-end-column="3" />
+          <caret line="54" column="38" lean-forward="true" selection-start-line="54" selection-start-column="38" selection-end-line="54" selection-end-column="38" />
           <folding />
         </state>
       </provider>
