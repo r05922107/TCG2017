@@ -1,5 +1,5 @@
-* 4:37pm January 16, 2018
-* Player1 vs Player2
+* 3:19pm January 17, 2018
+* Player1(a0) vs Player2(a1)
 * 1 2 2 2 2 2 5 1 2 2 2 2 2 5
 * X X X X
 * X X X X
@@ -11,6 +11,10 @@
 * X X X X
 * first 0
 * time 900000
-* 1. c5(P)
+* 1. c6(M) d5(c)
+* 2. a2(p) c5(P)
 * Comment 0 0
-0. 11877
+0. 1516173620736
+1. 1516173620940
+2. 1516173621180
+3. 1516173621374

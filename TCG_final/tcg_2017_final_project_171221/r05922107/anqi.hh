@@ -42,17 +42,25 @@ enum FIN {
 // 28 29 30 31
 typedef int POS;
 
+extern const POS ADJ[32][4];
+
 struct MOV {
 	POS st; // 起點
 	POS ed; // 終點 // 若 ed==st 表示是翻子
     double score;
+    bool eatEvent[2];  //if this move can eat opponent in future
 
 	MOV() {
         st = -1;
         ed = -1;
+        score = 0;
+        eatEvent[0] = false;
+        eatEvent[1] = false;
     }
 	MOV(POS s,POS e):st(s),ed(e) {
         score = 0;
+        eatEvent[0] = false;
+        eatEvent[1] = false;
     }
 
 	bool operator==(const MOV &x) const {return st==x.st&&ed==x.ed;}
@@ -84,12 +92,12 @@ struct BOARD {
 	CLR who;     // 現在輪到那一方下
 	FIN fin[32]; // 各個位置上面擺了啥
 	int cnt[14]; // 各種棋子的未翻開數量
-    std::bitset<128> hashValue;
+    std::bitset<1024> hashValue;
 
 	void NewGame();              // 開新遊戲
 	int  LoadGame(const char*);  // 載入遊戲並傳回時限(單位:秒)
 	void Display() const;        // 顯示到 stderr 上
-	int  MoveGen(MOVLST&) const; // 列出所有走法(走子+吃子,不包括翻子)
+	int  MoveGen(MOVLST&, POS = -1) const; // 列出所有走法(走子+吃子,不包括翻子)
 	                             // 回傳走法數量
 	bool ChkLose() const;        // 檢查當前玩家(who)是否輸了
 	bool ChkValid(MOV) const;    // 檢查是否為合法走法

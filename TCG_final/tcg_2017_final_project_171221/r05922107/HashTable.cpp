@@ -10,16 +10,16 @@ HashTable::HashTable(){
 
     for(int i=0; i<15; i++){
         for(int j=0; j<32; j++){
-            hashKey[i][j] = (bitset<128>(rand()) << 96) ^ (bitset<128>(rand()) << 64) ^ (bitset<128>(rand()) << 32) ^ bitset<128>(rand());
+            hashKey[i][j] = (bitset<1024>(rand()) << 96) ^ (bitset<1024>(rand()) << 64) ^ (bitset<1024>(rand()) << 32) ^ bitset<1024>(rand());
         }
     }
 
     for(int i=0; i<2; i++){
-        whoKey[i] = (bitset<128>(rand()) << 96) ^ (bitset<128>(rand()) << 64) ^ (bitset<128>(rand()) << 32) ^ bitset<128>(rand());
+        whoKey[i] = (bitset<1024>(rand()) << 96) ^ (bitset<1024>(rand()) << 64) ^ (bitset<1024>(rand()) << 32) ^ bitset<1024>(rand());
     }
 }
 
-int HashTable::modifyTableSize(bitset<128> &bit){
+int HashTable::modifyTableSize(bitset<1024> &bit){
     int mask = 1;
     int result = 0;
     for(size_t i=0; i<HASH_N; i++){
@@ -55,7 +55,7 @@ bool HashTable::update(BOARD &board, int value, int depth, bool exact){
     return true;
 }
 
-Entry *HashTable::get(BOARD &board){
+Entry* HashTable::get(BOARD &board){
     int index = modifyTableSize(board.hashValue);
     Entry* origin_Entry = &(hashTable[index]);
     if(origin_Entry->valid && origin_Entry->who == board.who &&
@@ -66,8 +66,8 @@ Entry *HashTable::get(BOARD &board){
 }
 
 //color[next] XOR s[q1][l1] XOR ... XOR s[qx][lx]
-bitset<128> HashTable::getHashValue(BOARD &board){
-    bitset<128> hashValue = 0;
+bitset<1024> HashTable::getHashValue(BOARD &board){
+    bitset<1024> hashValue = 0;
 
     for(int i=0; i<32; i++){
         if(board.fin[i] != FIN_E){
@@ -78,11 +78,11 @@ bitset<128> HashTable::getHashValue(BOARD &board){
     return hashValue;
 }
 
-bitset<128> HashTable::pieceXOR(bitset<128> &originValue, int fin, int pos){
+bitset<1024> HashTable::pieceXOR(bitset<1024> &originValue, int fin, int pos){
     return originValue ^ hashKey[fin][pos];
 }
 
-bitset<128> HashTable::whoXOR(bitset<128> &originValue){
+bitset<1024> HashTable::whoXOR(bitset<1024> &originValue){
     return originValue ^ whoKey[0] ^ whoKey[1];
 }
 

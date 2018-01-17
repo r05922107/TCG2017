@@ -23,7 +23,7 @@ struct Entry{
     int who;
     bool valid;
     bool exact;
-    bitset<128> hashValue;
+    bitset<1024> hashValue;
     Entry(){
         valid = false;
     }
@@ -32,20 +32,20 @@ struct Entry{
 
 class HashTable {
 public:
-    bitset<128> hashKey[15][32];  //15:bright and dark piece  32:position
-    bitset<128> whoKey[2];
+    bitset<1024> hashKey[15][32];  //15:bright and dark piece  32:position
+    bitset<1024> whoKey[2];
 
     Entry hashTable[TABLE_SIZE];
     Entry missEntry;
 
     HashTable();
 
-    int modifyTableSize(bitset<128> &bit);
+    int modifyTableSize(bitset<1024> &bit);
     bool update(BOARD &board, int value, int depth, bool exact);
     Entry *get(BOARD &board);
-    bitset<128> getHashValue(BOARD &board);
-    bitset<128> pieceXOR(bitset<128> &originValue, int fin, int pos);
-    bitset<128> whoXOR(bitset<128> &originValue);
+    bitset<1024> getHashValue(BOARD &board);
+    bitset<1024> pieceXOR(bitset<1024> &originValue, int fin, int pos);
+    bitset<1024> whoXOR(bitset<1024> &originValue);
 
 };
 extern HashTable HT;

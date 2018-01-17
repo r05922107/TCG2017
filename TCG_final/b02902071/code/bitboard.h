@@ -591,7 +591,7 @@ public:
         // cout << "src:" << src << " r:" << r << " c:" << c << endl;
 
         // ROW
-        u32 x = ((rank[r] & quickboard.occupied) ^ (One << src )) >> (4 * r);
+        u32 x = ((rankk[r] & quickboard.occupied) ^ (One << src )) >> (4 * r);
         
         // cout << "ROW X:";
         // print_string(x);

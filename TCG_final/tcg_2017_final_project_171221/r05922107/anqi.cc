@@ -29,7 +29,8 @@ static const char *nam[16]={
 	"¢Ý","¡@"
 };
 
-static const POS ADJ[32][4]={
+//right, up, left, down
+const POS ADJ[32][4]={
 	{ 1,-1,-1, 4},{ 2,-1, 0, 5},{ 3,-1, 1, 6},{-1,-1, 2, 7},
 	{ 5, 0,-1, 8},{ 6, 1, 4, 9},{ 7, 2, 5,10},{-1, 3, 6,11},
 	{ 9, 4,-1,12},{10, 5, 8,13},{11, 6, 9,14},{-1, 7,10,15},
@@ -264,23 +265,31 @@ void BOARD::Display() const {
 #endif
 }
 
-int BOARD::MoveGen(MOVLST &lst) const {
+int BOARD::MoveGen(MOVLST &lst, POS eatPos) const {
 	if(who==-1)return false;
 	lst.num=0;
 	for(POS p=0;p<32;p++) {
 		const FIN pf=fin[p];
 		if(GetColor(pf)!=who)continue;
-		const LVL pl=GetLevel(pf);
+		const LVL pl=GetLevel(pf);  //pf is mover's chess
 		for(int z=0;z<4;z++) {
 			const POS q=ADJ[p][z];
-			if(q==-1)continue;
+			if(q==-1)continue;  //edge
+            //only return eat move to eatPos
+            if(eatPos != -1){
+                if(q != eatPos){
+                    continue;
+                }
+            }
 			const FIN qf=fin[q];
-			if(pl!=LVL_C){if(!ChkEats(pf,qf))continue;}
-			else if(qf!=FIN_E)continue;
+			if(pl!=LVL_C){
+                if(!ChkEats(pf,qf))continue;  //smaller than opponent
+            }
+			else if(qf!=FIN_E)continue;  //cannon cannot eat by move one step
 			lst.mov[lst.num++]=MOV(p,q);
 		}
 		if(pl!=LVL_C)continue;
-		for(int z=0;z<4;z++) {
+		for(int z=0;z<4;z++) {  //find cannon capture move
 			int c=0;
 			for(POS q=p;(q=ADJ[q][z])!=-1;) {
 				const FIN qf=fin[q];
